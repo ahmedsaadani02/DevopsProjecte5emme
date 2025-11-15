@@ -2,21 +2,31 @@ pipeline {
     agent any
     
     stages {
-        stage('Checkout') {
+        stage('GIT') {
             steps {
+                echo "📥 Getting Project from Git"
                 checkout scm
             }
         }
         
-        stage('Clean') {
+        stage('MVN CLEAN') {
             steps {
+                echo "🧹 Nettoyage du projet"
                 sh 'mvn clean'
             }
         }
         
-        stage('Compile') {
+        stage('MVN COMPILE') {
             steps {
+                echo "🔨 Compilation du code"
                 sh 'mvn compile'
+            }
+        }
+        
+        stage('MVN SONARQUBE') {
+            steps {
+                echo "📊 Analyse SonarQube"
+                sh 'mvn sonar:sonar -Dsonar.projectKey=DevOpsProject -Dsonar.host.url=http://localhost:9000 -Dsonar.login=admin -Dsonar.password=Ahmed123/saadani'
             }
         }
         
@@ -28,9 +38,11 @@ pipeline {
     }
     
     post {
+        always {
+            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        }
         success {
-            archiveArtifacts 'target/*.jar'
-            echo '✅ Build réussi!'
+            echo '✅ Build et analyse SonarQube réussis!'
         }
         failure {
             echo '❌ Build échoué!'
